@@ -1,4 +1,4 @@
-TestInputs
+TestInputs for remix
 createArticle
 "testTitle","testSubTitle","Aditya","23-02-2020","RandomTestNewsContent",["bbc","times"],["crime","legal"]
 createUser
