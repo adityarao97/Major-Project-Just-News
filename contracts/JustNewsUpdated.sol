@@ -42,20 +42,19 @@ contract JustNews {
         string memory newsContent,string[] memory sourcesList,
         string[] memory tags)
             public{
-                News memory currentNews = News({
-                    journalistAddress:msg.sender,
-                    title:title,
-                    sub_title:sub_title,
-                    author:author,
-                    date:date,
-                    newsContent:newsContent,
-                    sourcesList:sourcesList,
-                    tags:tags,
-                    fakeCount:0,
-                    realCount:0,
-                    mlRating:true,
-                    result:true
-                });
+                News memory currentNews;
+                    currentNews.journalistAddress=msg.sender;
+                    currentNews.title=title;
+                    currentNews.sub_title=sub_title;
+                    currentNews.author=author;
+                    currentNews.date=date;
+                    currentNews.newsContent=newsContent;
+                    currentNews.sourcesList=sourcesList;
+                    currentNews.tags=tags;
+                    currentNews.fakeCount=0;
+                    currentNews.realCount=0;
+                    currentNews.mlRating=true;
+                    currentNews.result=true;
                 news.push(currentNews);
     }
 
@@ -84,7 +83,7 @@ contract JustNews {
                 uint j=0;
                 for(j;j<news[i].voters.length;j++)
                 {
-                    require(msg.sender!=voters[j]);                 //voter should not be repetitive
+                    require(msg.sender!=news[i].voters[j]);                 //voter should not be repetitive
                 }
                 if (val==true){
                     news[i].realCount++;
@@ -104,16 +103,18 @@ contract JustNews {
         uint i = 0;
         for(i;i<news.length;i++){
             if(keccak256(abi.encodePacked(news[i].title)) == keccak256(abi.encodePacked(title))){
-                require(news[i].fakeCount+news[i].realCount >= 10);
-                uint positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
-                uint negativeWeightage = 100 - positiveWeightage;
+                int realCount=news[i].realCount;
+                int fakeCount=news[i].fakeCount;
+                require(realCount+fakeCount >= 10);
+                int positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
+                int negativeWeightage = (fakeCount/(fakeCount + realCount)) * 100;
                 bool finalResult;
-                if(mlRating == true && positiveWeightage>negativeWeightage){
+                if(news[i].mlRating == true && positiveWeightage>negativeWeightage){
                     finalResult = true;
-            }
-            else{
-                finalResult=false;
-            }
+                }
+                else{
+                    finalResult=false;
+                }
                news[i].result=finalResult;
                news[i].realWeight=positiveWeightage;
                news[i].fakeWeight=negativeWeightage;
@@ -123,10 +124,11 @@ contract JustNews {
         }
     }
     
+        
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
         uint j=0;
-        uint finalAuthScore;
+        int finalAuthScore;
         address journalistAddress=news[i].journalistAddress;
         if(news[i].result==true)
         {
@@ -139,8 +141,9 @@ contract JustNews {
         for(j;j<users.length;j++){
             if(keccak256(abi.encodePacked(journalistAddress))==keccak256(abi.encodePacked(users[j].userAddress)))
             {
-                string newsTitle=news[i].title;
-                uint authCount,unauthCount;
+                string memory newsTitle=news[i].title;
+                int authCount;
+                int unauthCount;
                 users[i].authScore+=finalAuthScore;
                 users[i].newsList.push(newsTitle);
                 if(news[i].result==true)
@@ -155,7 +158,7 @@ contract JustNews {
                 }
                 if(users[i].newsList.length>3 && authCount<unauthCount)
                 {
-                    uint percentageAuth = (authCount/(authCount+unauthCount))*100;
+                    int percentageAuth = (authCount/(authCount+unauthCount))*100;
                     if(percentageAuth<20)
                     {
                         users[i].isBlocked=true;
@@ -165,4 +168,5 @@ contract JustNews {
             }
         }
     }
+    
 }
