@@ -26,13 +26,13 @@ contract JustNews {
         string name;
         string emailID;
         string joinDate;
-        int authScore;
+        int authScore;              //credit given to journalist based on the authenticity test default credit assigned is 5
         string[] newsList;          //titles of news published
         string[] authenticNewsList; //titles of news published by this author which are proven authentic
         string[] fakeNewsList;      //titles of news published by this author which are proven authentic
         int authenticCount;         //count of news which are correctly verified
-        int unauthenticCount; 
-        bool isBlocked;
+        int unauthenticCount;       //count of news which are incorrectly verified 
+        bool isBlocked;             //returns true and blocks a user if it has less than 30% of authentically verified news 
     }
     
     News[] public news;
@@ -53,8 +53,8 @@ contract JustNews {
                     tags:tags,
                     fakeCount:0,
                     realCount:0,
-                    mlRating:false,
-                    result:false
+                    mlRating:true,
+                    result:true
                 });
                 news.push(currentNews);
     }
@@ -66,8 +66,8 @@ contract JustNews {
                     currentUser.userAddress=msg.sender;
                     currentUser.name=name;
                     currentUser.emailID=emailID;
-                    currentUser.authScore=5;
                     currentUser.joinDate=joinDate;
+                    currentUser.authScore=5;
                     currentUser.authenticCount=0;
                     currentUser.unauthenticCount=0;
                     currentUser.isBlocked=false;
@@ -80,11 +80,11 @@ contract JustNews {
         uint i;
         for(i=0;i<news.length;i++){
             if(keccak256(abi.encodePacked(news[i].title))==keccak256(abi.encodePacked(title))){
-                require(msg.sender!=news[i].journalistAddress);
+                require(msg.sender!=news[i].journalistAddress);     //voter should not be the author of the news
                 uint j=0;
                 for(j;j<news[i].voters.length;j++)
                 {
-                    require(msg.sender!=voters[j]);
+                    require(msg.sender!=voters[j]);                 //voter should not be repetitive
                 }
                 if (val==true){
                     news[i].realCount++;
@@ -100,19 +100,20 @@ contract JustNews {
     }
     
     //takes in an article title along with votecount and ml input and decides authenticity of the article
-    function articleAuthenticity(string memory title,bool mlRating,int fakeCount,int realCount) public{
-        require(fakeCount+realCount>=10);
-        uint positiveWeightage = (realCount/(fakeCount+realCount))*100;
-        uint negativeWeightage = 100-positiveWeightage;
-        bool finalResult;
-        if(mlRating==true && positiveWeightage>negativeWeightage){
-            finalResult=true;
-        }
-        else{
-            finalResult=false;
-        }
-        for(i=0;i<news.length;i++){
-            if(keccak256(abi.encodePacked(news[i].title))==keccak256(abi.encodePacked(title))){
+    function articleAuthenticity(string memory title) public{
+        uint i = 0;
+        for(i;i<news.length;i++){
+            if(keccak256(abi.encodePacked(news[i].title)) == keccak256(abi.encodePacked(title))){
+                require(news[i].fakeCount+news[i].realCount >= 10);
+                uint positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
+                uint negativeWeightage = 100 - positiveWeightage;
+                bool finalResult;
+                if(mlRating == true && positiveWeightage>negativeWeightage){
+                    finalResult = true;
+            }
+            else{
+                finalResult=false;
+            }
                news[i].result=finalResult;
                news[i].realWeight=positiveWeightage;
                news[i].fakeWeight=negativeWeightage;
@@ -122,7 +123,7 @@ contract JustNews {
         }
     }
     
-    //for a news whose authenticity has been verified alter the publishers credit
+    //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
         uint j=0;
         uint finalAuthScore;
@@ -152,7 +153,7 @@ contract JustNews {
                     users[i].fakeNewsList.push(newsTitle);
                     unauthCount = users[i].unauthenticCount++;
                 }
-                if(authCount<unauthCount)
+                if(users[i].newsList.length>3 && authCount<unauthCount)
                 {
                     uint percentageAuth = (authCount/(authCount+unauthCount))*100;
                     if(percentageAuth<20)
