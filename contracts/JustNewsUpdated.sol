@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 contract JustNews {
 
     struct News {
+        string articleID;
         address journalistAddress;
         string title;
         string sub_title;
@@ -44,6 +45,7 @@ contract JustNews {
         string[] memory tags)
             public{
                 News memory currentNews;
+                    currentNews.articleID = bytes32ToString(bytes32(news.length));
                     currentNews.journalistAddress = msg.sender;
                     currentNews.title = title;
                     currentNews.sub_title = sub_title;
@@ -84,7 +86,7 @@ contract JustNews {
                 uint j = 0;
                 for(;j<news[i].voters.length;j++)
                 {
-                    require(msg.sender!=news[i].voters[j]);                 //voter should not be repetitive
+                    require(msg.sender != news[i].voters[j]);                 //voter should not be repetitive
                 }
                 if (val==true){
                     news[i].realCount++;
@@ -137,6 +139,16 @@ contract JustNews {
         return news;
     }
 
+    function getArticleByID(string ID) public view returns(News){
+        uint i = 0;
+        for(i;i<news.length;i++){
+            if(stringsEqual(news[i].articleID,ID)){
+                return news[i];
+                break;
+            }
+        }
+    }
+
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
         uint j = 0;
@@ -180,5 +192,25 @@ contract JustNews {
             }
         }
     }
+
+    function stringsEqual(string storage _a, string memory _b) internal returns (bool) {
+        bytes storage a = bytes(_a); bytes memory b = bytes(_b);
+        if (a.length != b.length) return false; // @todo unroll this loop
+        for (uint i = 0; i < a.length; i ++)
+            if (a[i] != b[i])
+                return false;
+        return true;
+    }
+
+    function bytes32ToString (bytes32 data) public returns (string) {
+    bytes memory bytesString = new bytes(32);
+    for (uint j = 0; j < 32; j++) {
+        byte char = byte(bytes32(uint(data) * 2 ** (8 * j)));
+        if (char != 0) {
+            bytesString[j] = char;
+        }
+    }
+    return string(bytesString);
+}
 
 }
