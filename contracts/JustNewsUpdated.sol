@@ -174,4 +174,8 @@ contract JustNews {
         }
     }
 
+    function getAllUsers() public view returns(User[]) {
+        return users;
+    }
+
 }
