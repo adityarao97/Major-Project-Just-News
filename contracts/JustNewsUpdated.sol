@@ -2,9 +2,9 @@ pragma solidity >=0.4.22 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 contract JustNews {
-    
+
     struct News {
-        address journalistAddress; 
+        address journalistAddress;
         string title;
         string sub_title;
         string author;
@@ -12,16 +12,17 @@ contract JustNews {
         string newsContent;
         string[] sourcesList;
         string[] tags;
-        int fakeCount;              //count of reported news as fake 
-        int realCount;              //count of reported news as real 
+        int fakeCount;              //count of reported news as fake
+        int realCount;              //count of reported news as real
         int fakeWeight;             //percentage of news reported as fake
         int realWeight;             //percentage of news reported as real
         bool mlRating;              //mlRating of the news as true or false
-        bool result;                //Overall Authenticity of the news based on fakeWeight,realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
+        bool result;                //Overall Authenticity of the news based on fakeWeight,
+                                    //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
         address[] voters;           //address of voters who have voted for current article
     }
-    
-    struct Users {
+
+    struct User {
         address userAddress;
         string name;
         string emailID;
@@ -29,47 +30,47 @@ contract JustNews {
         int authScore;              //credit given to journalist based on the authenticity test default credit assigned is 5
         string[] newsList;          //titles of news published
         string[] authenticNewsList; //titles of news published by this author which are proven authentic
-        string[] fakeNewsList;      //titles of news published by this author which are proven authentic
+        string[] fakeNewsList;      //titles of news published by this author which are proven fake
         int authenticCount;         //count of news which are correctly verified
-        int unauthenticCount;       //count of news which are incorrectly verified 
-        bool isBlocked;             //returns true and blocks a user if it has less than 30% of authentically verified news 
+        int unauthenticCount;       //count of news which are incorrectly verified
+        bool isBlocked;             //returns true and blocks a user if it has less than 30% of authentically verified news
     }
-    
+
     News[] public news;
-    Users[] public users;
-    
+    User[] public users;
+
     function createArticle(string memory title, string memory sub_title,string memory author,string memory date,
         string memory newsContent,string[] memory sourcesList,
         string[] memory tags)
             public{
                 News memory currentNews;
-                    currentNews.journalistAddress=msg.sender;
-                    currentNews.title=title;
-                    currentNews.sub_title=sub_title;
-                    currentNews.author=author;
-                    currentNews.date=date;
-                    currentNews.newsContent=newsContent;
-                    currentNews.sourcesList=sourcesList;
-                    currentNews.tags=tags;
-                    currentNews.fakeCount=0;
-                    currentNews.realCount=0;
-                    currentNews.mlRating=true;
-                    currentNews.result=true;
+                    currentNews.journalistAddress = msg.sender;
+                    currentNews.title = title;
+                    currentNews.sub_title = sub_title;
+                    currentNews.author = author;
+                    currentNews.date = date;
+                    currentNews.newsContent = newsContent;
+                    currentNews.sourcesList = sourcesList;
+                    currentNews.tags = tags;
+                    currentNews.fakeCount = 0;
+                    currentNews.realCount = 0;
+                    currentNews.mlRating = true;
+                    currentNews.result = true;
                 news.push(currentNews);
     }
 
     function createUser(string memory name,string memory emailID,
     	string memory joinDate)
             public{
-                Users memory currentUser;
-                    currentUser.userAddress=msg.sender;
-                    currentUser.name=name;
-                    currentUser.emailID=emailID;
-                    currentUser.joinDate=joinDate;
-                    currentUser.authScore=5;
-                    currentUser.authenticCount=0;
-                    currentUser.unauthenticCount=0;
-                    currentUser.isBlocked=false;
+                User memory currentUser;
+                    currentUser.userAddress = msg.sender;
+                    currentUser.name = name;
+                    currentUser.emailID = emailID;
+                    currentUser.joinDate = joinDate;
+                    currentUser.authScore = 5;
+                    currentUser.authenticCount = 0;
+                    currentUser.unauthenticCount = 0;
+                    currentUser.isBlocked = false;
                 users.push(currentUser);
     }
 
@@ -77,11 +78,11 @@ contract JustNews {
     function vote(string memory title,bool val) public{
         //search for the specific news title for which the voting has to be done
         uint i;
-        for(i=0;i<news.length;i++){
+        for(i = 0;i<news.length;i++){
             if(keccak256(abi.encodePacked(news[i].title))==keccak256(abi.encodePacked(title))){
-                require(msg.sender!=news[i].journalistAddress);     //voter should not be the author of the news
-                uint j=0;
-                for(j;j<news[i].voters.length;j++)
+                require(msg.sender != news[i].journalistAddress);     //voter should not be the author of the news
+                uint j = 0;
+                for(;j<news[i].voters.length;j++)
                 {
                     require(msg.sender!=news[i].voters[j]);                 //voter should not be repetitive
                 }
@@ -97,54 +98,58 @@ contract JustNews {
             }
         }
     }
-    
+
     //takes in an article title along with votecount and ml input and decides authenticity of the article
     function articleAuthenticity(string memory title) public{
         uint i = 0;
-        for(i;i<news.length;i++){
+        for(;i<news.length;i++){
             if(keccak256(abi.encodePacked(news[i].title)) == keccak256(abi.encodePacked(title))){
-                int realCount=news[i].realCount;
-                int fakeCount=news[i].fakeCount;
+                int realCount = news[i].realCount;
+                int fakeCount = news[i].fakeCount;
                 require(realCount+fakeCount >= 10);
                 int positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
                 int negativeWeightage = (fakeCount/(fakeCount + realCount)) * 100;
+                int mlContrib = (news[i].mlRating == true)?40:0;
                 bool finalResult;
-                if(news[i].mlRating == true && positiveWeightage>negativeWeightage){
+
+                int finalScore = mlContrib + positiveWeightage;
+
+                if(finalScore>50){
                     finalResult = true;
                 }
                 else{
-                    finalResult=false;
+                    finalResult = false;
                 }
-               news[i].result=finalResult;
-               news[i].realWeight=positiveWeightage;
-               news[i].fakeWeight=negativeWeightage;
+               news[i].result = finalResult;
+               news[i].realWeight = positiveWeightage;
+               news[i].fakeWeight = negativeWeightage;
                alterUserCredits(i);
                break;
             }
         }
     }
-    
-        
+
+
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
-        uint j=0;
+        uint j = 0;
         int finalAuthScore;
-        address journalistAddress=news[i].journalistAddress;
+        address journalistAddress = news[i].journalistAddress;
         if(news[i].result==true)
         {
-            finalAuthScore=1;
+            finalAuthScore = 1;
         }
         else
         {
-            finalAuthScore=-1;
+            finalAuthScore = -1;
         }
-        for(j;j<users.length;j++){
+        for(;j<users.length;j++){
             if(keccak256(abi.encodePacked(journalistAddress))==keccak256(abi.encodePacked(users[j].userAddress)))
             {
-                string memory newsTitle=news[i].title;
+                string memory newsTitle = news[i].title;
                 int authCount;
                 int unauthCount;
-                users[i].authScore+=finalAuthScore;
+                users[i].authScore += finalAuthScore;
                 users[i].newsList.push(newsTitle);
                 if(news[i].result==true)
                 {
@@ -161,12 +166,12 @@ contract JustNews {
                     int percentageAuth = (authCount/(authCount+unauthCount))*100;
                     if(percentageAuth<20)
                     {
-                        users[i].isBlocked=true;
+                        users[i].isBlocked = true;
                     }
                 }
                 break;
             }
         }
     }
-    
+
 }
