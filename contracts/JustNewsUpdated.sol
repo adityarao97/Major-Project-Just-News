@@ -149,6 +149,16 @@ contract JustNews {
         }
     }
 
+    function getUserByEmail(string mail) public view returns(User){
+        uint i = 0;
+        for(i;i<users.length;i++){
+            if(stringsEqual(users[i].emailID,mail)){
+                return users[i];
+                break;
+            }
+        }
+    }
+
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
         uint j = 0;
