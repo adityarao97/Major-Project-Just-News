@@ -129,6 +129,13 @@ contract JustNews {
         }
     }
 
+    function getAllUsers() public view returns(User[]){
+        return users;
+    }
+
+    function getAllArticles() public view returns(News[]){
+        return news;
+    }
 
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
@@ -149,33 +156,29 @@ contract JustNews {
                 string memory newsTitle = news[i].title;
                 int authCount;
                 int unauthCount;
-                users[i].authScore += finalAuthScore;
-                users[i].newsList.push(newsTitle);
+                users[j].authScore += finalAuthScore;
+                users[j].newsList.push(newsTitle);
                 if(news[i].result==true)
                 {
-                    users[i].authenticNewsList.push(newsTitle);
-                    authCount = users[i].authenticCount++;
+                    users[j].authenticNewsList.push(newsTitle);
+                    authCount = users[j].authenticCount++;
                 }
                 else
                 {
-                    users[i].fakeNewsList.push(newsTitle);
-                    unauthCount = users[i].unauthenticCount++;
+                    users[j].fakeNewsList.push(newsTitle);
+                    unauthCount = users[j].unauthenticCount++;
                 }
-                if(users[i].newsList.length>3 && authCount<unauthCount)
+                if(users[j].newsList.length>3 && authCount<unauthCount)
                 {
                     int percentageAuth = (authCount/(authCount+unauthCount))*100;
                     if(percentageAuth<20)
                     {
-                        users[i].isBlocked = true;
+                        users[j].isBlocked = true;
                     }
                 }
                 break;
             }
         }
-    }
-
-    function getAllUsers() public view returns(User[]) {
-        return users;
     }
 
 }
