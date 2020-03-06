@@ -129,6 +129,13 @@ contract JustNews {
         }
     }
 
+    function getAllUsers() public view returns(User[]){
+        return users;
+    }
+
+    function getAllArticles() public view returns(News[]){
+        return news;
+    }
 
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
