@@ -4,8 +4,8 @@ pragma experimental ABIEncoderV2;
 contract JustNews {
 
     struct News {
-        string articleID;
         address journalistAddress;
+        string id;
         string title;
         string sub_title;
         string author;
@@ -17,7 +17,7 @@ contract JustNews {
         int realCount;              //count of reported news as real
         int fakeWeight;             //percentage of news reported as fake
         int realWeight;             //percentage of news reported as real
-        bool mlRating;              //mlRating of the news as true or false
+        // bool mlRating;              //mlRating of the news as true or false
         bool result;                //Overall Authenticity of the news based on fakeWeight,
                                     //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
         address[] voters;           //address of voters who have voted for current article
@@ -40,12 +40,12 @@ contract JustNews {
     News[] public news;
     User[] public users;
 
-    function createArticle(string memory title, string memory sub_title,string memory author,string memory date,
+    function createArticle(string memory id, string memory title, string memory sub_title,string memory author,string memory date,
         string memory newsContent,string[] memory sourcesList,
         string[] memory tags)
             public{
                 News memory currentNews;
-                    currentNews.articleID = bytes32ToString(bytes32(news.length));
+                    currentNews.id = id;
                     currentNews.journalistAddress = msg.sender;
                     currentNews.title = title;
                     currentNews.sub_title = sub_title;
@@ -56,7 +56,7 @@ contract JustNews {
                     currentNews.tags = tags;
                     currentNews.fakeCount = 0;
                     currentNews.realCount = 0;
-                    currentNews.mlRating = true;
+                    // currentNews.mlRating = true;
                     currentNews.result = true;
                 news.push(currentNews);
     }
@@ -111,10 +111,10 @@ contract JustNews {
                 require(realCount+fakeCount >= 10);
                 int positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
                 int negativeWeightage = (fakeCount/(fakeCount + realCount)) * 100;
-                int mlContrib = (news[i].mlRating == true)?40:0;
+                // int mlContrib = (news[i].mlRating == true)?40:0;
                 bool finalResult;
 
-                int finalScore = mlContrib + positiveWeightage;
+                int finalScore = positiveWeightage;//mlContrib + positiveWeightage;
 
                 if(finalScore>50){
                     finalResult = true;
@@ -142,9 +142,8 @@ contract JustNews {
     function getArticleByID(string ID) public view returns(News){
         uint i = 0;
         for(i;i<news.length;i++){
-            if(stringsEqual(news[i].articleID,ID)){
+            if(stringsEqual(news[i].id,ID)){
                 return news[i];
-                break;
             }
         }
     }
@@ -154,7 +153,6 @@ contract JustNews {
         for(i;i<users.length;i++){
             if(stringsEqual(users[i].emailID,mail)){
                 return users[i];
-                break;
             }
         }
     }
@@ -203,7 +201,7 @@ contract JustNews {
         }
     }
 
-    function stringsEqual(string storage _a, string memory _b) internal returns (bool) {
+    function stringsEqual(string storage _a, string memory _b) internal view returns (bool) {
         bytes storage a = bytes(_a); bytes memory b = bytes(_b);
         if (a.length != b.length) return false; // @todo unroll this loop
         for (uint i = 0; i < a.length; i ++)
@@ -211,16 +209,4 @@ contract JustNews {
                 return false;
         return true;
     }
-
-    function bytes32ToString (bytes32 data) public returns (string) {
-    bytes memory bytesString = new bytes(32);
-    for (uint j = 0; j < 32; j++) {
-        byte char = byte(bytes32(uint(data) * 2 ** (8 * j)));
-        if (char != 0) {
-            bytesString[j] = char;
-        }
-    }
-    return string(bytesString);
-}
-
 }
