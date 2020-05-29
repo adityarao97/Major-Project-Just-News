@@ -15,12 +15,12 @@ contract JustNews {
         string[] tags;
         int fakeCount;              //count of reported news as fake
         int realCount;              //count of reported news as real
-        int fakeWeight;             //percentage of news reported as fake
-        int realWeight;             //percentage of news reported as real
-        // bool mlRating;              //mlRating of the news as true or false
+        uint mlRating;              //mlRating of the news as true or false
         bool result;                //Overall Authenticity of the news based on fakeWeight,
-        uint mlRating;              //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
-        address[] voters;           //address of voters who have voted for current article
+        int finalResult;            //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
+        address[] voters;
+        address[] positiveVoters;
+        address[] negativeVoters; //address of voters who have voted for current article
     }
 
     struct User {
@@ -56,9 +56,10 @@ contract JustNews {
                     currentNews.tags = tags;
                     currentNews.fakeCount = 0;
                     currentNews.realCount = 0;
-                    // currentNews.mlRating = true;
+                    currentNews.mlRating = 0;
                     currentNews.result = true;
-                news.push(currentNews);
+                    currentNews.finalResult = 0;
+                    news.push(currentNews);
     }
 
     function createUser(string memory name,string memory emailID,
@@ -76,6 +77,11 @@ contract JustNews {
                 users.push(currentUser);
     }
 
+    function random() public view returns(uint) { 
+        uint randomValue = uint(keccak256(abi.encodePacked(now))); 
+        return uint(randomValue)%100+1;
+    } 
+
     //takes in title of the news and vote decision and updates the votecount of that news appropriately
     function vote(string memory title,bool val) public{
         //search for the specific news title for which the voting has to be done
@@ -91,10 +97,12 @@ contract JustNews {
                 if (val==true){
                     news[i].realCount++;
                     news[i].voters.push(msg.sender);
+                    news[i].positiveVoters.push(msg.sender);
                  }
                 else{
                     news[i].fakeCount++;
                     news[i].voters.push(msg.sender);
+                    news[i].negativeVoters.push(msg.sender);
                 }
                 break;
             }
@@ -104,58 +112,62 @@ contract JustNews {
     //takes in an article title along with votecount and ml input and decides authenticity of the article
     function articleAuthenticity(string memory title) public{
         uint i = 0;
+        uint k1 = 0;
+        uint k2 = 0;
         for(;i<news.length;i++){
             if(keccak256(abi.encodePacked(news[i].title)) == keccak256(abi.encodePacked(title))){
-                int realCount = news[i].realCount;
-                int fakeCount = news[i].fakeCount;
-                require(realCount+fakeCount >= 10);
-                int positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
-                int negativeWeightage = (fakeCount/(fakeCount + realCount)) * 100;
-                // int mlContrib = (news[i].mlRating == true)?40:0;
+                int realCount = (int(random())%100)+1;
+                int fakeCount = 100-realCount-1;
+                news[i].realCount = realCount;
+                news[i].fakeCount = fakeCount;
+                // require(realCount+fakeCount >= 10);
                 bool finalResult;
-
-                int finalScore = positiveWeightage;//mlContrib + positiveWeightage;
-
-                if(finalScore>50){
+                int finalScore = realCount + int(news[i].mlRating);//mlContrib + positiveWeightage;
+                news[i].finalResult = finalScore;
+                if(finalScore>100){
                     finalResult = true;
                 }
                 else{
                     finalResult = false;
                 }
                news[i].result = finalResult;
-               news[i].realWeight = positiveWeightage;
-               news[i].fakeWeight = negativeWeightage;
-               alterUserCredits(i);
+              alterUserCredits(i);
+              for(;k1<news[i].positiveVoters.length;k1++){
+                  alterVotersCredits(i,uint(k1),true);
+              }
+              for(;k2<news[i].negativeVoters.length;k2++){
+                  alterVotersCredits(i,uint(k2),false);
+              }
                break;
             }
         }
     }
 
-    function getAllUsers() public view returns(User[]){
-        return users;
-    }
+    // function getAllUsers() public view returns(User[]){
+    //     return users;
+    // }
 
-    function getAllArticles() public view returns(News[]){
-        return news;
-    }
+    // function getAllArticles() public view returns(News[]){
+    //     return news;
+    // }
 
-    function getArticleByID(string ID) public view returns(News){
-        uint i = 0;
-        for(i;i<news.length;i++){
-            if(stringsEqual(news[i].id,ID)){
-                return news[i];
-            }
-        }
-    }
+    // function getArticleByID(string ID) public view returns(News){
+    //     uint i = 0;
+    //     for(i;i<news.length;i++){
+    //         if(stringsEqual(news[i].id,ID)){
+    //             return news[i];
+    //         }
+    //     }
+    // }
 
-    function getUserByEmail(string mail) public view returns(User){
-        uint i = 0;
-        for(i;i<users.length;i++){
-            if(stringsEqual(users[i].emailID,mail)){
-                return users[i];
-            }
-        }
-    }
+    // function getUserByEmail(string mail) public view returns(User){
+    //     uint i = 0;
+    //     for(i;i<users.length;i++){
+    //         if(stringsEqual(users[i].emailID,mail)){
+    //             return users[i];
+    //         }
+    //     }
+    // }
 
     //for a news whose authenticity has been verified and result decided alter the publishers credit
     function alterUserCredits(uint i) public{
@@ -198,6 +210,26 @@ contract JustNews {
                 }
                 break;
             }
+        }
+    }
+    
+    function alterVotersCredits(uint i,uint k,bool flag) public{
+        address votersAddress;
+        int val = 0;
+        if(flag==true){
+            votersAddress = news[i].positiveVoters[k];
+            val = 1;
+        }
+        else{
+            votersAddress = news[i].negativeVoters[k];
+            val = -1;
+        }
+        uint j = 0;
+        for(;j<users.length;j++){
+            if(keccak256(abi.encodePacked(votersAddress))==keccak256(abi.encodePacked(users[j].userAddress))){
+                    users[j].authScore+=val;   
+                    break;
+                }
         }
     }
 

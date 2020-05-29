@@ -1,7 +1,14 @@
 TestInputs 
+
 createArticle
-"testTitle","testSubTitle","Aditya","23-02-2020","RandomTestNewsContent",["bbc","times"],["crime","legal"]
+"testID","testTitle","testSubTitle","Aditya","23-02-2020","RandomTestNewsContent",["bbc","times"],["crime","legal"]
+
 createUser
 "Karan","kps@gmail.com","20-02-2020"
+"Aditya","adi@gmail.com","20-02-2020"
+"Nikit","nsk@gmail.com","20-02-2020"
+"Rachana","gvd@gmail.com","20-02-2020"
 
+vote
+"testTitle",true
 
