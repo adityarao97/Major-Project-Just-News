@@ -19,7 +19,7 @@ contract JustNews {
         int realWeight;             //percentage of news reported as real
         // bool mlRating;              //mlRating of the news as true or false
         bool result;                //Overall Authenticity of the news based on fakeWeight,
-                                    //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
+        uint mlRating;              //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
         address[] voters;           //address of voters who have voted for current article
     }
 
@@ -196,6 +196,17 @@ contract JustNews {
                         users[j].isBlocked = true;
                     }
                 }
+                break;
+            }
+        }
+    }
+
+    function assignMLRating(uint mlrating, string memory title) public{
+        uint i = 0;
+        for(;i<news.length;i++){
+            if(keccak256(abi.encodePacked(news[i].title)) == keccak256(abi.encodePacked(title))){
+                news[i].mlRating = mlrating;
+                articleAuthenticity(title);
                 break;
             }
         }
