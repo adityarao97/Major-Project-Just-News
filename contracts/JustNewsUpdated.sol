@@ -244,6 +244,30 @@ contract JustNews {
         }
     }
 
+    function voteType(string memory title) public view returns (uint) {
+        uint i = 0;
+        User storage currentUser;
+        for(;i<users.length;i++){
+            if(users[i].userAddress == msg.sender)
+                currentUser = users[i];
+        }
+        for(i = 0;i<news.length;i++){
+            if(keccak256(abi.encodePacked(news[i].title))==keccak256(abi.encodePacked(title))){
+                uint j;
+                for(j = 0;j<news[i].positiveVoters.length;j++){
+                    if(news[i].positiveVoters[j] == msg.sender)
+                        return 1;
+                }
+                for(j = 0;j<news[i].negativeVoters.length;j++){
+                    if(news[i].negativeVoters[j] == msg.sender)
+                        return 2;
+                }
+                return 0;
+            }
+        }
+
+    }
+
     function stringsEqual(string storage _a, string memory _b) internal view returns (bool) {
         bytes storage a = bytes(_a); bytes memory b = bytes(_b);
         if (a.length != b.length) return false; // @todo unroll this loop
