@@ -15,11 +15,9 @@ contract JustNews {
         string[] tags;
         int fakeCount;              //count of reported news as fake
         int realCount;              //count of reported news as real
-        int fakeWeight;             //percentage of news reported as fake
-        int realWeight;             //percentage of news reported as real
-        // bool mlRating;              //mlRating of the news as true or false
+        uint mlRating;              //mlRating of the news as true or false
         bool result;                //Overall Authenticity of the news based on fakeWeight,
-                                    //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
+        int finalResult;                            //realWeight and mlRating, result is true if mlRating is true and realWeight is greater than fakeWeight
         address[] voters;
         address[] positiveVoters;
         address[] negativeVoters; //address of voters who have voted for current article
@@ -58,8 +56,9 @@ contract JustNews {
                     currentNews.tags = tags;
                     currentNews.fakeCount = 0;
                     currentNews.realCount = 0;
-                    // currentNews.mlRating = true;
+                    currentNews.mlRating = 0;
                     currentNews.result = true;
+                    currentNews.finalResult = 0;
                     news.push(currentNews);
     }
 
@@ -118,26 +117,20 @@ contract JustNews {
         for(;i<news.length;i++){
             if(keccak256(abi.encodePacked(news[i].title)) == keccak256(abi.encodePacked(title))){
                 int realCount = (int(random())%100)+1;
-                int fakeCount = 100-realCount;
+                int fakeCount = 100-realCount-1;
                 news[i].realCount = realCount;
                 news[i].fakeCount = fakeCount;
                 // require(realCount+fakeCount >= 10);
-                // int positiveWeightage = (realCount/(fakeCount + realCount)) * 100;
-                // int negativeWeightage = (fakeCount/(fakeCount + realCount)) * 100;
-                // int mlContrib = (news[i].mlRating == true)?40:0;
                 bool finalResult;
-
-                int finalScore = realCount;//mlContrib + positiveWeightage;
-
-                if(finalScore>50){
+                int finalScore = realCount + int(news[i].mlRating);//mlContrib + positiveWeightage;
+                news[i].finalResult = finalScore;
+                if(finalScore>100){
                     finalResult = true;
                 }
                 else{
                     finalResult = false;
                 }
                news[i].result = finalResult;
-               news[i].realWeight = realCount;
-               news[i].fakeWeight = fakeCount;
               alterUserCredits(i);
               for(;k1<news[i].positiveVoters.length;k1++){
                   alterVotersCredits(i,uint(k1),true);
